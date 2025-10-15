@@ -14,14 +14,18 @@ def menu(imoveis):
         print('=======================MENU IMÓVEIS=======================')
         print('= 1 - Listar todos imóveis                               =')
         print('= 2 - Listar imóveis do tipo Venda                        =')
-        print('= 3 - Listar imóveis do tipo Aluguel                     =') #QUANDO FOR DO TIPO ALUGUEL MULTIPLICAR PELO CONTRATO 
+        print('= 3 - Listar imóveis do tipo Aluguel                     =')
         print('= 4 - Listar imóveis de valor menor que                   =')
-        print('= 5 - Listar imóveis da cidade com o tipo (Venda/Aluguel)  =') #USUARIO INFORMA CIDADE E TIPO DE IMOVEL
-        print('= 6 - Corrigir IGP-M (REAJUSTE DE ALUGUEL)               =') #CORRIGE ALUGUEL DADO A PORCENTAGEM (ATUALIZA O VALOR APENAS DE TODOS IMOVEIS DE ALUGUEL)
-        print('= 7 - Atualizar um imovel por id                         =') #ATUALIZAR SOMENTE: VALOR, ALUGUEL, DATA, METRAGEM, CONTRATO
+        print('= 5 - Listar imóveis da cidade com o tipo (Venda/Aluguel)  =')
+        print('= 6 - Corrigir IGP-M (REAJUSTE DE ALUGUEL)               =')
+        print('= 7 - Atualizar um imovel por id                         =')
         print('= 8 - Remover um imovel por id                           =')
         print('= 0 - Sair')
-        opcao = int(input('>>'))
+        try:
+            opcao = int(input('>> '))
+        except:
+            print('Opção Inválida!')
+            continue
         if opcao == 1:
             imprimir_todos_imoveis(imoveis)
         elif opcao == 2:
@@ -33,16 +37,24 @@ def menu(imoveis):
         elif opcao == 5:
             imprimir_por_cidade(imoveis, imprimir_imovel)
         elif opcao == 6:
-            print('Não Implementado')
+            corrigir_igpm(imoveis)
         elif opcao == 7:
-            id = int(input("Entre com o ID do imóvel: "))
+            try:
+                id = int(input("Entre com o ID do imóvel: "))
+            except:
+                print("ID inválido.")
+                continue
             posicao = buscar_por_id(imoveis, id)
             if posicao == -1:
                 print("Imóvel não encontrado.")
             else:
                 atualizar_por_id(imoveis, posicao)
         elif opcao == 8:
-            id = int(input("Entre com o ID do imóvel: "))
+            try:
+                id = int(input("Entre com o ID do imóvel: "))
+            except:
+                print("ID inválido.")
+                continue
             posicao = buscar_por_id(imoveis, id)
             if posicao == -1:
                 print("Imóvel não encontrado.")
@@ -79,17 +91,32 @@ def imprimir_imoveis_aluguel(imoveis, imprimir_imovel):
             imprimir_imovel(im)
     
 def imprimir_valor_menorque(imoveis, imprimir_imovel):
-    valorBuscado = int(input("Informe um valor: "))
+    try:
+        valorBuscado = int(input("Informe um valor: "))
+    except:
+        print("Valor inválido.")
+        return
     for im in imoveis:
         if im["valor"] < valorBuscado:
             imprimir_imovel(im)
             
 def imprimir_por_cidade(imoveis, imprimir_imovel):
-    cidadeBuscada = input("Informe a cidade: ").lower()
-    tipoBuscado = input("Informe o tipo de negociação (Aluguel - True / Venda - False): ")
+    cidadeBuscada = input("Informe a cidade: ").strip().lower()
+    tipoBuscado = input("Informe o tipo de negociação (Aluguel / Venda): ").strip().lower()
+    if tipoBuscado in ('aluguel','a','s','sim','true','t'):
+        tipo_bool = True
+    elif tipoBuscado in ('venda','v','n','nao','não','false','f'):
+        tipo_bool = False
+    else:
+        print("Tipo de negociação inválido. Use 'Aluguel' ou 'Venda'.")
+        return
+    encontrou = False
     for im in imoveis:
-        if im["aluguel"] == tipoBuscado:
+        if im.get("cidade", "").strip().lower() == cidadeBuscada and im.get("aluguel") == tipo_bool:
             imprimir_imovel(im)
+            encontrou = True
+    if not encontrou:
+        print("Nenhum imóvel encontrado para os filtros informados.")
             
 def buscar_por_id(imoveis, id):
     for im in range(len(imoveis)):
@@ -98,16 +125,29 @@ def buscar_por_id(imoveis, id):
     return -1            
 
 def atualizar_por_id(imoveis, posicao):
-    imovel = imoveis[posicao] #variável que pega o dicionário atual no índice desejado na lista
+    imovel = imoveis[posicao]
 
-    valor = int(input("Entre com o valor do imóvel em R$: "))
-    aluguel = input("O imóvel é do tipo aluguel? (S|N) ").upper()
-    aluguel = True if aluguel == 'S' else False
+    try:
+        valor = int(input("Entre com o valor do imóvel em R$: "))
+    except:
+        print("Valor inválido.")
+        return
+    aluguel_input = input("O imóvel é do tipo aluguel? (S|N) ").upper()
+    aluguel = True if aluguel_input == 'S' else False
     data = input("Entre com a data de inclusão do imóvel (Ex. 00/00/00) ")
-    metragem = int(input("Entre com a metragem do imóvel: "))
+    try:
+        metragem = int(input("Entre com a metragem do imóvel: "))
+    except:
+        print("Metragem inválida.")
+        return
     if aluguel == True:
-        contrato = int(input("Entre com o valor do contrato: "))
-    
+        try:
+            contrato = int(input("Entre com o valor do contrato: "))
+        except:
+            print("Contrato inválido.")
+            return
+    else:
+        contrato = 1
 
     imovel_atualizado = dict(
         id = imovel["id"],
@@ -115,15 +155,33 @@ def atualizar_por_id(imoveis, posicao):
         cidade = imovel["cidade"],
         valor = valor,
         aluguel = aluguel,
-        data = data,
+        data_inclusao = data,
         metragem = metragem,
         contrato = contrato
-        if imovel["aluguel"] == True:
-            contrato = contrato
     )
 
     imoveis[posicao] = imovel_atualizado
     print("==== Imóvel Atualizado com Sucesso!")
+
+def corrigir_igpm(imoveis):
+    try:
+        perc = float(input("Informe a porcentagem de reajuste (ex.: 5 para 5%): "))
+    except:
+        print("Porcentagem inválida.")
+        return
+    fator = 1 + (perc / 100)
+    reajustados = 0
+    for im in imoveis:
+        if im.get('aluguel') == True:
+            valor_antigo = im.get('valor', 0)
+            novo_valor = int(valor_antigo * fator)
+            im['valor'] = novo_valor
+            reajustados += 1
+            print("ID", im['id'], "-", im['tipo'], "reajustado de", valor_antigo, "para", novo_valor)
+    if reajustados == 0:
+        print("Não há imóveis de aluguel para reajustar.")
+    else:
+        print("Total de imóveis reajustados:", reajustados)
 
 def remover_por_id(imoveis, posicao):
     imoveis.pop(posicao)
